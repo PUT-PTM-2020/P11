@@ -48,14 +48,18 @@
 /* Private variables ---------------------------------------------------------*/
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac1;
+DMA_HandleTypeDef hdma_dac2;
 
 TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
 
 UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
 uint8_t receiveUART[3];
 uint16_t sizeReceiveUART = 3;
+volatile int delay = 300;
+char *notesViolin[16] = {"pp ", "D4 ", "F4 ", "G4 ", "G4 ", "D4 ", "F4 ", "G4 ", "G4 ", "D4 ", "F4", "G4 ", "G4 ", "A4 ", "D4 ", "F4 "};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,6 +69,7 @@ static void MX_DMA_Init(void);
 static void MX_DAC_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_UART4_Init(void);
+static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -143,14 +148,16 @@ int main(void)
   MX_DAC_Init();
   MX_TIM6_Init();
   MX_UART4_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim7);
   get_sineval();
   get_sawval();
   get_quadval();
-  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, quad_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
+  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, saw_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
+  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_2, quad_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
   HAL_UART_Receive_IT(&huart4, receiveUART, sizeReceiveUART);
-  printf("%i", 11);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,19 +167,42 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//  setNote("A4", &htim6);
-//	HAL_Delay(100);
-//	setNote("E5", &htim6);
-//	HAL_Delay(100);
-//	setNote("A6", &htim6);
-//	HAL_Delay(100);
-//	setNote("E5", &htim6);
-//	HAL_Delay(100);
-//	setNote("A6", &htim6);
-//	HAL_Delay(100);
-//	setNote("E5", &htim6);
-//	HAL_Delay(100);
-
+	setNote("D2 ", &htim7);
+	setNote("pp ", &htim6);
+	HAL_Delay(delay);
+    setNote("D4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("F4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("D2 ", &htim7);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("D4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("F4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("AS2", &htim7);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+    setNote("D4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("F4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("C2 ", &htim7);
+	setNote("G4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("A4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("D4 ", &htim6);
+	HAL_Delay(delay);
+	setNote("F4 ", &htim6);
+	HAL_Delay(delay);
   }
   /* USER CODE END 3 */
 }
@@ -251,6 +281,13 @@ static void MX_DAC_Init(void)
   {
     Error_Handler();
   }
+  /** DAC channel OUT2 config 
+  */
+  sConfig.DAC_Trigger = DAC_TRIGGER_T7_TRGO;
+  if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN DAC_Init 2 */
 
   /* USER CODE END DAC_Init 2 */
@@ -292,6 +329,44 @@ static void MX_TIM6_Init(void)
   /* USER CODE BEGIN TIM6_Init 2 */
 
   /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+  * @brief TIM7 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM7_Init(void)
+{
+
+  /* USER CODE BEGIN TIM7_Init 0 */
+
+  /* USER CODE END TIM7_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM7_Init 1 */
+
+  /* USER CODE END TIM7_Init 1 */
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 0;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 0;
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM7_Init 2 */
+
+  /* USER CODE END TIM7_Init 2 */
 
 }
 
@@ -341,6 +416,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
@@ -381,9 +459,10 @@ static void MX_GPIO_Init(void)
 int pressed = 0;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if(huart->Instance == UART4){
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 		if(strcmp((const char*)receiveUART, "C3 ") == 0){
 			if(!pressed){
-				setNote("C4", &htim6);
+				setNote("C4 ", &htim6);
 				pressed = 1;
 			}
 		}
@@ -393,9 +472,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "D3") == 0){
+		if(strcmp((const char*)receiveUART, "D3 ") == 0){
 			if(!pressed){
-				setNote("D4", &htim6);
+				setNote("D4 ", &htim6);
 				pressed = 1;
 			}
 		}
@@ -405,15 +484,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "E3") == 0){
+		if(strcmp((const char*)receiveUART, "E3 ") == 0){
 			if(!pressed){
-				setNote("E4", &htim6);
+				setNote("E4 ", &htim6);
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "F3") == 0){
+		if(strcmp((const char*)receiveUART, "F3 ") == 0){
 			if(!pressed){
-				setNote("F4", &htim6);
+				setNote("F4 ", &htim6);
 				pressed = 1;
 			}
 		}
@@ -423,9 +502,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "G3") == 0){
+		if(strcmp((const char*)receiveUART, "G3 ") == 0){
 			if(!pressed){
-				setNote("G4", &htim6);
+				setNote("G4 ", &htim6);
 				pressed = 1;
 			}
 		}
@@ -435,9 +514,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "A3") == 0){
+		if(strcmp((const char*)receiveUART, "A3 ") == 0){
 			if(!pressed){
-				setNote("A4", &htim6);
+				setNote("A4 ", &htim6);
 				pressed = 1;
 			}
 		}
@@ -447,20 +526,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "H3") == 0){
+		if(strcmp((const char*)receiveUART, "H3 ") == 0){
 			if(!pressed){
-				setNote("H4", &htim6);
+				setNote("B4 ", &htim6);
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "C4") == 0){
+		if(strcmp((const char*)receiveUART, "C4 ") == 0){
 			if(!pressed){
-				setNote("C5", &htim6);
+				setNote("C5 ", &htim6);
 				pressed = 1;
 			}
 		}
-		if(strcmp((const char*)receiveUART, "pp") == 0){
-			setNote("pp", &htim6);
+		if(strcmp((const char*)receiveUART, "pp ") == 0){
+			setNote("pp ", &htim6);
 			pressed = 0;
 		}
 		HAL_UART_Receive_IT(&huart4, receiveUART, sizeReceiveUART);

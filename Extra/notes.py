@@ -3,70 +3,71 @@ import pandas as pd
 
 CLOCK_MCU = 84000000
 TOLERANCE = 0.01
+SAMPLING_RATE = 50
 
 notes = [
     ("pp ", 1),
-    ("C2 ", 6500),
-    ("CS2", 6900),
-    ("D2 ", 7300),
-    ("DS2", 7800),
-    ("E2 ", 8200),
-    ("F2 ", 8700),
-    ("FS2", 9200),
-    ("G2 ", 9800),
-    ("GS2", 10400),
-    ("A2 ", 11000),
-    ("AS2", 11700),
-    ("B2 ", 12300),
-    ("C3 ", 13100),
-    ("CS3", 13900),
-    ("D3 ", 14700),
-    ("DS3", 15600),
-    ("E3 ", 16500),
-    ("F3 ", 17500),
-    ("FS3", 18500),
-    ("G3 ", 19600),
-    ("GS3", 20800),
-    ("A3 ", 22000),
-    ("AS3", 23300),
-    ("B3 ", 24700),
-    ("C4 ", 26200),
-    ("CS4", 27700),
-    ("D4 ", 29400),
-    ("DS4", 31100),
-    ("E4 ", 33000),
-    ("F4 ", 34900),
-    ("FS4", 37000),
-    ("G4 ", 39200),
-    ("GS4", 41500),
-    ("A4 ", 44000),
-    ("AS4", 46600),
-    ("B4 ", 49400),
-    ("C5 ", 52300),
-    ("CS5", 55400),
-    ("D5 ", 58700),
-    ("DS5", 62200),
-    ("E5 ", 65900),
-    ("F5 ", 69800),
-    ("FS5", 74000),
-    ("G5 ", 78400),
-    ("GS5", 83100),
-    ("A5 ", 88000),
-    ("AS5", 93200),
-    ("B5 ", 98800),
-    ("C6 ", 104700),
-    ("CS6", 110900),
-    ("D6 ", 117500),
-    ("DS6", 124500),
-    ("E6 ", 131800),
-    ("F6 ", 139700),
-    ("FS6", 148000),
-    ("G6 ", 156800),
-    ("GS6", 166100),
-    ("A6 ", 176000),
-    ("AS6", 186500),
-    ("B6 ", 197600),
-    ("C7 ", 209300)
+    ("C2 ", 65),
+    ("CS2", 69),
+    ("D2 ", 73),
+    ("DS2", 78),
+    ("E2 ", 82),
+    ("F2 ", 87),
+    ("FS2", 92),
+    ("G2 ", 98),
+    ("GS2", 104),
+    ("A2 ", 110),
+    ("AS2", 117),
+    ("B2 ", 123),
+    ("C3 ", 131),
+    ("CS3", 139),
+    ("D3 ", 147),
+    ("DS3", 156),
+    ("E3 ", 165),
+    ("F3 ", 175),
+    ("FS3", 185),
+    ("G3 ", 196),
+    ("GS3", 208),
+    ("A3 ", 220),
+    ("AS3", 233),
+    ("B3 ", 247),
+    ("C4 ", 262),
+    ("CS4", 277),
+    ("D4 ", 294),
+    ("DS4", 311),
+    ("E4 ", 330),
+    ("F4 ", 349),
+    ("FS4", 370),
+    ("G4 ", 392),
+    ("GS4", 415),
+    ("A4 ", 440),
+    ("AS4", 466),
+    ("B4 ", 494),
+    ("C5 ", 523),
+    ("CS5", 554),
+    ("D5 ", 587),
+    ("DS5", 622),
+    ("E5 ", 659),
+    ("F5 ", 698),
+    ("FS5", 740),
+    ("G5 ", 784),
+    ("GS5", 831),
+    ("A5 ", 880),
+    ("AS5", 932),
+    ("B5 ", 988),
+    ("C6 ", 1047),
+    ("CS6", 1109),
+    ("D6 ", 1175),
+    ("DS6", 1245),
+    ("E6 ", 1318),
+    ("F6 ", 1397),
+    ("FS6", 1480),
+    ("G6 ", 1568),
+    ("GS6", 1661),
+    ("A6 ", 1760),
+    ("AS6", 1865),
+    ("B6 ", 1976),
+    ("C7 ", 2093)
 ]
 
 # -----------------------------------------------------
@@ -86,7 +87,7 @@ def perfect_divisors(trg_f):
     for psc in range(1, 65536):
         arr = CLOCK_MCU / (trg_f * psc)
         if CLOCK_MCU % psc == 0:
-            if arr <= 65536:
+            if arr <= 65536 and arr >= 2:
                 exacts.append(psc)
     return exacts
 
@@ -115,7 +116,7 @@ def possible_prescaler_value(trg_f):
 def close_divisor(psc, tolerance, trg_f):
     arr = CLOCK_MCU / (trg_f * psc)
     error = abs_error(int(arr), arr)
-    if error < tolerance and arr < 65536.0:
+    if error < tolerance and arr < 65536.0 and arr >= 2:
         h = hertz(CLOCK_MCU, psc, int(arr))
         return psc, int(arr), h, error
     else:
@@ -126,7 +127,8 @@ def close_divisor(psc, tolerance, trg_f):
 
 f = open("notes.c", "w")
 f.write("void setNote(char* note, TIM_HandleTypeDef* htim){\n")
-for note, freq in notes:
+notes_sampled = [(x[0], x[1] * 100) for x in notes]
+for note, freq in notes_sampled:
     df = pd.DataFrame(columns=['PSC', 'ARR', 'F', 'ERROR'], dtype=np.double)
     exact_prescalers = perfect_divisors(freq)
     exact_values = []
@@ -160,9 +162,9 @@ for note, freq in notes:
 
     psc = df.iloc[0].loc["PSC"]
     arr = df.iloc[0].loc["ARR"]
-    f.write("   if(note == \""+note+"\"){\n")
+    f.write("   if(strcmp(note, \""+note+"\") == 0){\n")
     f.write("       htim->Instance->PSC = "+psc+";\n")
-    f.write("       htim->Instance->ARR = "+str(arr if int(arr) > 0 else 1)+";\n")
+    f.write("       htim->Instance->ARR = "+arr+";\n")
     f.write("   }\n")
     print(note + " generated.")
 f.write("}")

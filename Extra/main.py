@@ -34,36 +34,36 @@ def handle_keypress(event):
     key_down = True
     
     if event.char == 'a':
-        sock.sendall("C3".encode())
+        sock.sendall("C3 ".encode())
     if event.char == 'q':
         sock.sendall("CS3".encode())
     if event.char == 's':
-        sock.sendall("D3".encode())
+        sock.sendall("D3 ".encode())
     if event.char == 'w':
         sock.sendall("DS3".encode())
     if event.char == 'd':
-        sock.sendall("E3".encode())
+        sock.sendall("E3 ".encode())
     if event.char == 'f':
-        sock.sendall("F3".encode())
+        sock.sendall("F3 ".encode())
     if event.char == 'r':
         sock.sendall("FS3".encode())
     if event.char == 'g':
-        sock.sendall("G3".encode())
+        sock.sendall("G3 ".encode())
     if event.char == 't':
         sock.sendall("GS3".encode())
     if event.char == 'h':
-        sock.sendall("A3".encode())
+        sock.sendall("A3 ".encode())
     if event.char == 'y':
         sock.sendall("AS3".encode())
     if event.char == 'j':
-        sock.sendall("H3".encode())
+        sock.sendall("H3 ".encode())
     if event.char == 'k':
-        sock.sendall("C4".encode())
+        sock.sendall("C4 ".encode())
 
 def handle_keyrelease(event):
     global key_down, sock
     key_down = False
-    sock.sendall("pp".encode())
+    sock.sendall("pp ".encode())
 
 window.bind("<KeyPress>", handle_keypress)
 window.bind("<KeyRelease>", handle_keyrelease)

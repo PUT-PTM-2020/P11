@@ -116,46 +116,46 @@ static void tcp_server_task(void *pvParameters)
                 rx_buffer[len] = 0;
                 ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
                 ESP_LOGI(TAG, "%s", rx_buffer);
-                if(strcmp(rx_buffer, "C3") == 0){
+                if(strcmp(rx_buffer, "C3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
                 if(strcmp(rx_buffer, "CS3") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "D3") == 0){
+                if(strcmp(rx_buffer, "D3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
                 if(strcmp(rx_buffer, "DS3") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "E3") == 0){
+                if(strcmp(rx_buffer, "E3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "F3") == 0){
+                if(strcmp(rx_buffer, "F3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
                 if(strcmp(rx_buffer, "FS3") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "G3") == 0){
+                if(strcmp(rx_buffer, "G3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
                 if(strcmp(rx_buffer, "GS3") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "A3") == 0){
+                if(strcmp(rx_buffer, "A3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
                 if(strcmp(rx_buffer, "AS3") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "H3") == 0){
+                if(strcmp(rx_buffer, "H3 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "C4") == 0){
+                if(strcmp(rx_buffer, "C4 ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                 }
-                if(strcmp(rx_buffer, "pp") == 0){
+                if(strcmp(rx_buffer, "pp ") == 0){
                     uart_write_bytes(UART_NUM_1, (const char *) rx_buffer, len);
                     gpio_set_level(22, 0);
                 }else{
