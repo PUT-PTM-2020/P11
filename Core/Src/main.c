@@ -37,7 +37,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define PI 3.1416f
-#define SAMPLING_RATE 100
+#define SAMPLING_RATE 200
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,6 +50,7 @@ DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac1;
 DMA_HandleTypeDef hdma_dac2;
 
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 
@@ -58,8 +59,9 @@ UART_HandleTypeDef huart4;
 /* USER CODE BEGIN PV */
 uint8_t receiveUART[3];
 uint16_t sizeReceiveUART = 3;
-volatile int delay = 300;
-char *notesViolin[16] = {"pp ", "D4 ", "F4 ", "G4 ", "G4 ", "D4 ", "F4 ", "G4 ", "G4 ", "D4 ", "F4", "G4 ", "G4 ", "A4 ", "D4 ", "F4 "};
+volatile int tempo = 115;
+volatile char *sequence[8] = {"C4 ", "D4 ", "E4 ", "F4 ", "G4 ", "A4 ", "B4 ", "C5 "};
+volatile int sequence_iterator = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,19 +72,21 @@ static void MX_DAC_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_UART4_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int _write(int file, char *ptr, int len)
-{
-  /* Implement your write code here, this is used by puts and printf for example */
-  int i=0;
-  for(i=0 ; i<len ; i++)
-    ITM_SendChar((*ptr++));
-  return len;
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
+	if(htim->Instance == TIM4){
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		setNote(sequence[sequence_iterator], &htim7);
+		sequence_iterator++;
+		if(sequence_iterator == 8) sequence_iterator = 0;
+	}
 }
 
 uint32_t sine_val[SAMPLING_RATE];
@@ -149,9 +153,11 @@ int main(void)
   MX_TIM6_Init();
   MX_UART4_Init();
   MX_TIM7_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim6);
   HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Base_Start_IT(&htim4);
   get_sineval();
   get_sawval();
   get_quadval();
@@ -167,42 +173,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	setNote("D2 ", &htim7);
-	setNote("pp ", &htim6);
-	HAL_Delay(delay);
-    setNote("D4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("F4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("D2 ", &htim7);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("D4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("F4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("AS2", &htim7);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-    setNote("D4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("F4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("C2 ", &htim7);
-	setNote("G4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("A4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("D4 ", &htim6);
-	HAL_Delay(delay);
-	setNote("F4 ", &htim6);
-	HAL_Delay(delay);
   }
   /* USER CODE END 3 */
 }
@@ -291,6 +261,51 @@ static void MX_DAC_Init(void)
   /* USER CODE BEGIN DAC_Init 2 */
 
   /* USER CODE END DAC_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 6999;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 11999;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 
