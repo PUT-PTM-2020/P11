@@ -24,9 +24,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include <stdio.h>
 #include "notes.h"
 #include "math.h"
-#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,14 +54,17 @@ TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 
-UART_HandleTypeDef huart4;
-
 /* USER CODE BEGIN PV */
-uint8_t receiveUART[3];
-uint16_t sizeReceiveUART = 3;
 volatile int tempo = 115;
 volatile char *sequence[8] = {"C4 ", "D4 ", "E4 ", "F4 ", "G4 ", "A4 ", "B4 ", "C5 "};
-volatile int sequence_iterator = 0;
+int sequence_iterator = 0;
+volatile int delay = 170;
+int chosen_wave = 0;
+int octave = 4;
+int next_octave;
+char active_note[3];
+char octave_str[1];
+char next_octave_str[1];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,7 +73,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_DAC_Init(void);
 static void MX_TIM6_Init(void);
-static void MX_UART4_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
@@ -82,10 +84,10 @@ static void MX_TIM4_Init(void);
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	if(htim->Instance == TIM4){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		setNote(sequence[sequence_iterator], &htim7);
-		sequence_iterator++;
-		if(sequence_iterator == 8) sequence_iterator = 0;
+//		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+//		setNote(sequence[sequence_iterator], &htim7);
+//		sequence_iterator++;
+//		if(sequence_iterator == 8) sequence_iterator = 0;
 	}
 }
 
@@ -127,7 +129,9 @@ void get_quadval(){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	next_octave = octave + 1;
+	sprintf(octave_str, "%d", octave);
+	sprintf(next_octave_str, "%d", next_octave);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -151,7 +155,6 @@ int main(void)
   MX_DMA_Init();
   MX_DAC_Init();
   MX_TIM6_Init();
-  MX_UART4_Init();
   MX_TIM7_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
@@ -163,7 +166,6 @@ int main(void)
   get_quadval();
   HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, saw_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
   HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_2, quad_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
-  HAL_UART_Receive_IT(&huart4, receiveUART, sizeReceiveUART);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -173,6 +175,197 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET);
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_11)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "C");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_12)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "CS");
+		strcat(active_note, octave_str);
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "D");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "DS");
+		strcat(active_note, octave_str);
+	  	setNote(active_note, &htim6);
+	  }
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET);
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "E");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "F");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "FS");
+		strcat(active_note, octave_str);
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "G");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET);
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "GS");
+		strcat(active_note, octave_str);
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "A");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "AS");
+		strcat(active_note, octave_str);
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		strcpy(active_note, "");
+		strcat(active_note, "B");
+		strcat(active_note, octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11)));
+		strcpy(active_note, "");
+		strcat(active_note, "C");
+		strcat(active_note, next_octave_str);
+		strcat(active_note, " ");
+	  	setNote(active_note, &htim6);
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12)));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		if(chosen_wave == 0){
+			HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+			HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, sine_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
+			chosen_wave += 1;
+		}else if(chosen_wave == 1){
+			HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+			HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, saw_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
+			chosen_wave += 1;
+		}else if(chosen_wave == 2){
+		  	HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+		  	HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, quad_val, SAMPLING_RATE, DAC_ALIGN_12B_R);
+		  	chosen_wave = 0;
+		}
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))){
+		HAL_Delay(delay);
+		while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)));
+		if(octave > 2){
+			octave -= 1;
+			next_octave = octave + 1;
+			sprintf(octave_str, "%d", octave);
+			sprintf(next_octave_str, "%d", next_octave);
+		}
+	  }
+
+	  if (!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14))){
+		HAL_Delay(delay);
+	  	while(!(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14)));
+	  	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+	  	if(octave < 6){
+	  		octave += 1;
+	  		next_octave = octave + 1;
+	  		sprintf(octave_str, "%d", octave);
+	  		sprintf(next_octave_str, "%d", next_octave);
+	  	}
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -385,39 +578,6 @@ static void MX_TIM7_Init(void)
 
 }
 
-/**
-  * @brief UART4 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_UART4_Init(void)
-{
-
-  /* USER CODE BEGIN UART4_Init 0 */
-
-  /* USER CODE END UART4_Init 0 */
-
-  /* USER CODE BEGIN UART4_Init 1 */
-
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 115200;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
-
-  /* USER CODE END UART4_Init 2 */
-
-}
-
 /** 
   * Enable DMA controller clock
   */
@@ -449,11 +609,15 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -461,8 +625,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD13 PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pins : PE7 PE8 PE9 PE10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB11 PB12 PB13 PB14 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -471,95 +648,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-int pressed = 0;
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == UART4){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		if(strcmp((const char*)receiveUART, "C3 ") == 0){
-			if(!pressed){
-				setNote("C4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "CS3") == 0){
-			if(!pressed){
-				setNote("CS4", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "D3 ") == 0){
-			if(!pressed){
-				setNote("D4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "DS3") == 0){
-			if(!pressed){
-				setNote("DS4", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "E3 ") == 0){
-			if(!pressed){
-				setNote("E4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "F3 ") == 0){
-			if(!pressed){
-				setNote("F4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "FS3") == 0){
-			if(!pressed){
-				setNote("FS4", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "G3 ") == 0){
-			if(!pressed){
-				setNote("G4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "GS3") == 0){
-			if(!pressed){
-				setNote("GS4", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "A3 ") == 0){
-			if(!pressed){
-				setNote("A4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "AS3") == 0){
-			if(!pressed){
-				setNote("AS4", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "H3 ") == 0){
-			if(!pressed){
-				setNote("B4 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "C4 ") == 0){
-			if(!pressed){
-				setNote("C5 ", &htim6);
-				pressed = 1;
-			}
-		}
-		if(strcmp((const char*)receiveUART, "pp ") == 0){
-			setNote("pp ", &htim6);
-			pressed = 0;
-		}
-		HAL_UART_Receive_IT(&huart4, receiveUART, sizeReceiveUART);
-	}
-}
+
 /* USER CODE END 4 */
 
 /**
